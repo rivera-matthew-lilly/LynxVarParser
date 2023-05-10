@@ -137,6 +137,7 @@ class Program
             Console.WriteLine("  Source Well: " + sourceWell_Disp);
         }
         FunctionBase.WriteOutputFile(aspirateLynxOutputDict, dispenseLynxOutputDict);
+        FunctionBase.WriteVVPDataPackage(aspirateLynxOutputDict, dispenseLynxOutputDict);
     }
 }
 //.dL
