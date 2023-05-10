@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Threading.Tasks.Dataflow;
 
 public class FunctionBase
 {
     //public static (string, string, string, string, string, string, string, string, string, string, string) TransferStringParser(string input)
-    public static Dictionary<string, string[]> vvpDataOutputDict (string input)
+    public static Dictionary<int, string[]> vvpDataOutputDict (string input)
     {
         string vvpChannel = string.Empty;
         string volumeReported = string.Empty;
@@ -39,7 +40,7 @@ public class FunctionBase
         dateTime = commaSeparatedArray[105];
         //Console.WriteLine(barcode + " " + deckLocation + " " + dateTime);
 
-        Dictionary<string, string[]> vvpDataPackage = new Dictionary<string, string[]>();
+        Dictionary<int, string[]> vvpDataPackage = new Dictionary<int, string[]>();
         int j = 0;
         // Print the resulting jagged array
         foreach (string[] subArray in resultArray)
@@ -55,7 +56,7 @@ public class FunctionBase
                 HPC = subArray[6];
                 sourceWell = subArray[7];
                 //Console.WriteLine(vvpChannel + " " + volumeReported + " " + residualVolume + " " + channelStatus + " " + flowRate + " " + valveTime + " " + HPC + " " + sourceWell);
-                vvpDataPackage.Add(vvpChannel, new string[] { dateTime, barcode, deckLocation, volumeReported, residualVolume, channelStatus, flowRate, valveTime, HPC, sourceWell });
+                vvpDataPackage.Add(j, new string[] { dateTime, barcode, deckLocation, volumeReported, residualVolume, channelStatus, flowRate, valveTime, HPC, sourceWell, vvpChannel });
             }
             j++;
         }
@@ -175,5 +176,76 @@ public class FunctionBase
         }
 
         return (errorDescription, errorDetail, errorMessage);
+    }
+    /*  
+            dateTime_Asp = kvp.Value[0];
+            barcode_Asp = kvp.Value[1];
+            deckLocation_Asp = kvp.Value[2];
+            volumeReported_Asp = kvp.Value[3];
+            residualVolume_Asp = kvp.Value[4];
+            channelStatus_Asp = kvp.Value[5];
+            flowRate_Asp = kvp.Value[6];
+            valveTime_Asp = kvp.Value[7];
+            HPC_Asp = kvp.Value[8];
+            sourceWell_Asp = kvp.Value[9];
+            vvpChannel_Asp = kvp.Value[10];
+    */
+    public static void WriteOutputFile(Dictionary<int, string[]> aspirateLynxOutputDict, Dictionary<int, string[]> dispenseLynxOutputDict)
+    {
+        //get these from outside script, need to be set at start of method
+        string methodName = "TESTINGMETHODOUTPUT";
+        string dateTimeStamp = "05-04-2023_11.09.02";
+        string outputPath = @"C:\Matthew IC Copy For Test\Lynx\Output\TESTINGMETHODOUTPUT\" + methodName + "_" + dateTimeStamp + "_" + "TransferOutput.csv";
+        string[] headers = { "Source Barcode", "Source Well", "Aspirated Volume Reported", "Aspirate VVP Channel", "Aspirate Channel Status", "Destination Barcode", "Destination Well", "Dispensed Volume Reported", "Dispense VVP Channel", "Dispense Channel Status" };
+
+        if (File.Exists(outputPath))
+        {
+            using (StreamWriter writer = File.AppendText(outputPath))
+            {
+                for (int i = 1; i < 97; i++)
+                {
+                    string barcode_Asp = aspirateLynxOutputDict[i][1];
+                    string sourceWell_Asp = aspirateLynxOutputDict[i][9];
+                    string volumeReported_Asp = aspirateLynxOutputDict[i][3];
+                    string vvpChannel_Asp = aspirateLynxOutputDict[i][10];
+                    string channelStatus_Asp = aspirateLynxOutputDict[i][5];
+
+                    string barcode_Disp = dispenseLynxOutputDict[i][1];
+                    string sourceWell_Disp = dispenseLynxOutputDict[i][9];
+                    string volumeReported_Disp = dispenseLynxOutputDict[i][3];
+                    string vvpChannel_Disp = dispenseLynxOutputDict[i][10];
+                    string channelStatus_Disp = dispenseLynxOutputDict[i][5];
+
+                    string[] data = { barcode_Asp, sourceWell_Asp, volumeReported_Asp, vvpChannel_Asp, channelStatus_Asp, barcode_Disp, sourceWell_Disp, volumeReported_Disp, vvpChannel_Disp, channelStatus_Disp };
+                    writer.WriteLine(string.Join(",", data));
+                }
+            }
+        }
+        else
+        {
+            using (StreamWriter writer = File.CreateText(outputPath))
+            {
+                // Write the headers to the CSV file
+                writer.WriteLine(string.Join(",", headers));
+
+                for (int i = 1; i < 97; i++)
+                {
+                    string barcode_Asp = aspirateLynxOutputDict[i][1];
+                    string sourceWell_Asp = aspirateLynxOutputDict[i][9];
+                    string volumeReported_Asp = aspirateLynxOutputDict[i][3];
+                    string vvpChannel_Asp = aspirateLynxOutputDict[i][10];
+                    string channelStatus_Asp = aspirateLynxOutputDict[i][5];
+
+                    string barcode_Disp = dispenseLynxOutputDict[i][1];
+                    string sourceWell_Disp = dispenseLynxOutputDict[i][9];
+                    string volumeReported_Disp = dispenseLynxOutputDict[i][3];
+                    string vvpChannel_Disp = dispenseLynxOutputDict[i][10];
+                    string channelStatus_Disp = dispenseLynxOutputDict[i][5];
+
+                    string[] data = { barcode_Asp, sourceWell_Asp, volumeReported_Asp, vvpChannel_Asp, channelStatus_Asp, barcode_Disp, sourceWell_Disp, volumeReported_Disp, vvpChannel_Disp, channelStatus_Disp };
+                    writer.WriteLine(string.Join(",", data));
+                }
+            }
+        }
     }
 }
